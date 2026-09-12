@@ -9,7 +9,7 @@ import { default as EditorList } from "./editorList";
 import { default as TextField } from "./text-field";
 import DatePicker from "./datePicker";
 import i18n from "@/plugins/i18n";
-import { getDate } from "@/plugins/date";
+import { CONTENT_TIMEZONE_LABEL, getDate, toStoredDate } from "@/plugins/date";
 
 export { FilePicker, ImagePicker, ObjectPickerList, ObjectPickerNew, EditorList, TextField };
 
@@ -69,14 +69,20 @@ export function computeComponent({ field, item, onChange, openDialog, key, showL
     case "date-picker":
       let value = getDate(defaultValue);
       result = (
-        <DatePicker
-          inputValue={value}
-          onChange={onChange}
-          required={props.required}
-          readOnly={props.readOnly}
-          min={typeof options?.min === "number" ? undefined : options.min}
-          max={typeof options?.max === "number" ? undefined : options.max}
-        />
+        <div className="flex flex-col gap-y-1">
+          <DatePicker
+            inputValue={value}
+            // The input yields offset-less wall-clock text. Convert it to a real
+            // instant before it reaches the item, or the server - which runs in
+            // UTC - stores whatever was typed as UTC. See plugins/date.ts.
+            onChange={(text) => onChange(toStoredDate(text))}
+            required={props.required}
+            readOnly={props.readOnly}
+            min={typeof options?.min === "number" ? undefined : options.min}
+            max={typeof options?.max === "number" ? undefined : options.max}
+          />
+          <span className="text-xs text-gray-500">{CONTENT_TIMEZONE_LABEL}</span>
+        </div>
       );
       break;
     case "checkbox":
